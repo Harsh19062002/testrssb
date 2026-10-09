@@ -93,56 +93,84 @@ function WebcamModal({ onCapture, onClose }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800">
-          <div className="flex items-center gap-2 text-sm font-semibold text-white">
-            <Camera className="w-4 h-4 text-blue-400" /> Camera
-            {devices.length > 1 && (
-              <select
-                value={selectedId}
-                onChange={e => handleDeviceChange(e.target.value)}
-                className="ml-2 text-xs bg-zinc-800 text-zinc-300 border border-zinc-700 rounded-lg px-2 py-1 focus:outline-none"
-              >
-                {devices.map((d, i) => (
-                  <option key={d.deviceId} value={d.deviceId}>{d.label || `Camera ${i + 1}`}</option>
-                ))}
-              </select>
-            )}
-          </div>
-          <button onClick={onClose} className="p-1.5 text-zinc-500 hover:text-white rounded-lg transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {/* Full-screen video feed */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="absolute inset-0 w-full h-full object-cover"
+      />
 
-        <div className="relative aspect-video bg-black">
-          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-          {!ready && !error && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-zinc-500 animate-spin" />
-            </div>
-          )}
-          {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-400 text-sm">
-              <Camera className="w-8 h-8 opacity-30" /><p>{error}</p>
-            </div>
-          )}
-          {ready && (
-            <div className="absolute top-3 left-3 bg-red-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" /> LIVE
-            </div>
-          )}
+      {/* Loading overlay */}
+      {!ready && !error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black">
+          <Loader2 className="w-10 h-10 text-white/60 animate-spin" />
+          <p className="text-white/50 text-sm font-medium">Starting camera…</p>
         </div>
+      )}
 
-        <div className="px-5 py-4 flex justify-end">
+      {/* Error overlay */}
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black">
+          <Camera className="w-12 h-12 text-white/20" />
+          <p className="text-white/60 text-sm font-medium">{error}</p>
           <button
-            onClick={snap}
-            disabled={!ready}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-colors"
+            onClick={onClose}
+            className="mt-2 text-xs text-white/50 underline hover:text-white"
           >
-            <Camera className="w-4 h-4" /> Capture Photo
+            Close
           </button>
         </div>
+      )}
+
+      {/* Top bar — LIVE badge + close */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 pt-5 z-10">
+        {ready && (
+          <div className="bg-red-600/90 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow">
+            <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" /> LIVE
+          </div>
+        )}
+        {!ready && <div />}
+        <button
+          onClick={onClose}
+          className="p-2 rounded-full bg-black/50 backdrop-blur text-white hover:bg-black/70 transition-colors shadow"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Bottom controls */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col items-center gap-4 pb-10 pt-6
+        bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+
+        {/* Camera selector (if multiple) */}
+        {devices.length > 1 && (
+          <select
+            value={selectedId}
+            onChange={e => handleDeviceChange(e.target.value)}
+            className="text-xs bg-white/10 backdrop-blur text-white border border-white/20 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/30"
+          >
+            {devices.map((d, i) => (
+              <option key={d.deviceId} value={d.deviceId} className="bg-zinc-900">
+                {d.label || `Camera ${i + 1}`}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {/* Shutter button */}
+        <button
+          onClick={snap}
+          disabled={!ready}
+          aria-label="Capture photo"
+          className="w-20 h-20 rounded-full bg-white disabled:opacity-30 hover:bg-white/90 active:scale-95 transition-all duration-150 shadow-2xl flex items-center justify-center group"
+        >
+          <div className="w-16 h-16 rounded-full border-4 border-black/20 group-hover:border-black/30 transition-colors" />
+        </button>
+
+        <p className="text-white/50 text-xs font-medium tracking-wide">Tap to capture</p>
       </div>
     </div>
   );
