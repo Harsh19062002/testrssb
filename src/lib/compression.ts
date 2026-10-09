@@ -1,14 +1,6 @@
 import imageCompression from 'browser-image-compression';
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
 import { CompressionOptions, CompressedResult, ProcessingStats } from '@/types';
-
-// Ensure PDF.js worker is configured in browser environments
-if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${
-    pdfjsLib.version || '5.6.205'
-  }/build/pdf.worker.min.mjs`;
-}
 
 export function formatBytes(bytes: number, decimals: number = 2): string {
   if (bytes === 0) return '0 Bytes';
@@ -144,12 +136,21 @@ function canvasCompressFallback(file: File | Blob, options?: CompressionOptions)
  * High-ratio PDF rasterization compression.
  * Renders pages to canvas, downsamples high-res embedded graphics/scans to optimized JPEG,
  * and reconstructs a high-clarity PDF.
+ * Dynamically loaded in the browser to prevent Next.js SSR DOMMatrix errors.
  */
 async function rasterCompressPDF(
   arrayBuffer: ArrayBuffer,
   options?: CompressionOptions
 ): Promise<Uint8Array | null> {
+  if (typeof window === 'undefined') return null;
+
   try {
+    const pdfjsLib = await import('pdfjs-dist');
+    if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${
+        pdfjsLib.version || '5.6.205'
+      }/build/pdf.worker.min.mjs`;
+    }
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
     const pdf = await loadingTask.promise;
     const numPages = pdf.numPages;
