@@ -27,6 +27,7 @@ export interface CompressedResult {
 
 export interface UploadHistoryItem {
   id: string;
+  uploaderName?: string;
   fileName: string;
   fileType: 'photo' | 'pdf';
   originalSize: string;

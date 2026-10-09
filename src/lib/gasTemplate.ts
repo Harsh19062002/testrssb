@@ -18,6 +18,7 @@ function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
 
+    var uploaderName   = data.uploaderName   || data.name || "Anonymous";
     var fileName       = data.fileName       || ("file_" + new Date().getTime());
     var fileType       = data.fileType       || "photo";
     var base64Data     = data.base64Data     || "";
@@ -60,13 +61,19 @@ function doPost(e) {
       sheet = ss.getActiveSheet();
     }
 
+    // Ensure sheet headers exist & include Uploader Name column
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Timestamp", "File Name", "File Type", "Original Size", "Compressed Size", "Reduction %", "Google Drive Link"]);
-      sheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#e8f0fe");
+      sheet.appendRow(["Timestamp", "Uploader Name", "File Name", "File Type", "Original Size", "Compressed Size", "Reduction %", "Google Drive Link"]);
+      sheet.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#e8f0fe");
+    } else if (sheet.getRange(1, 2).getValue() !== "Uploader Name") {
+      sheet.insertColumnBefore(2);
+      sheet.getRange(1, 2).setValue("Uploader Name");
+      sheet.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#e8f0fe");
     }
 
     sheet.appendRow([
       new Date().toLocaleString(),
+      uploaderName,
       fileName, fileType,
       originalSize, compressedSize, reductionPct,
       driveUrl
